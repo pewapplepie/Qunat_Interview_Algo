@@ -1,81 +1,47 @@
 import collections
 import functools
 import itertools
+from typing import List
+class Solution:
+    def countSolvable(self, words: List[str], result: str) -> bool:
+        self.count = 0
+        allWords = words + [result]
+        firstChars = set(word[0] for word in allWords if len(word) > 1)
+        n = max(map(len, allWords))
+        if len(result) < n: return False
+        def dfs(charIdx, wordIdx, carry, visited, char2digit):
+            if charIdx == n: return carry == 0
+            if wordIdx == len(allWords):
+                # time to check the final status for the current digit
+                sums = sum(char2digit[word[-charIdx - 1]] if charIdx < len(word) else 0 for word in words) + carry
+                if sums % 10 == char2digit[result[-charIdx - 1]]:
+                    return dfs(charIdx + 1, 0, sums // 10, visited, char2digit)
+                else:
+                    return False # prune. To support this, using -charIdx - 1 to visit from right/low to left/high
+            # current word length is too short to check, move to check next word
+            if wordIdx < len(words) and charIdx >= len(words[wordIdx]):
+                return dfs(charIdx, wordIdx + 1, carry, visited, char2digit)
 
-class solution(object):
-    def countSolvable(self, words, result):
-        @functools.lru_cache(None)
-        def helper(i, total, nums):
-
-            if i == len(chars):
-                return total == 0
-
-            if i - 1 in checkpoints:
-                t = str(abs(total))[::-1]
-                for j in checkpoints[i-1]:
-                    if (j < len(t)) and (t[j] != '0'):
-                        return False
-
-            for j in range(len(nums)):
-                if (nums[j] == 0) and (chars[i] not in not_zero) and helper(i+1, total, nums[:j]+nums[j+1:]):
-                    return True
-                elif (nums[j] != 0) and helper(i+1, total + nums[j] * mult[chars[i]], nums[:j] + nums[j+1:]):
-                    return True
-
-            return False
-
-        # 1. Check the lengths of each word and result
-        longest_word = len(max(words, key = len))
-        if (len(result) < longest_word) or (len(result) > longest_word + 1):
-            return False
-
-        # 2. Check if result is in words
-        if result in words:
-            return len(words) < 3 and all(word == result or len(word) == 1 for word in words)
-
-        # 3. Leading letters cannot be zero unless the length of the word is 1
-        not_zero = set((word[0] for word in words if len(word) > 1))
-        if len(result) > 1: not_zero.add(result[0])
-
-        # 4. Set of all letters
-        chars = set(result + ''.join(words))
-
-        # 5. Letters in words add to the total
-        mult = {char:0 for char in chars}
-        groups = collections.defaultdict(set)
-        for word in words:
-            for i,char in enumerate(reversed(word)):
-                mult[char] += 10**i
-                groups[i].add(char)
-
-        # 6. And letters in result subtract from the total
-        for i,char in enumerate(reversed(result)):
-            mult[char] -= 10**i
-            groups[i].add(char)
-
-        # 7. Letters that add and subtract the same amount can be any number, so ignore them.
-        chars = {char for char in chars if mult[char]}
-        for g in groups:
-            groups[g] = groups[g].intersection(chars)
-        chars = list(chars)
-
-        # 8. All letters that occur later in the word may affect letters ealrier in the word
-        for g in range(1, len(groups)):
-            groups[g] |= groups[g-1]
-        chars.sort(key = lambda c: min(g for g in range(len(groups)) if c in groups[g]))
-
-        # 9. Once a number has been assigned to all the letters in a group
-        #    the digit in total at position 10**i must be zero for a solution to exist
-        checkpoints = collections.defaultdict(list)
-        seen = set()
-        checked = set()
-        for i,char in enumerate(chars):
-            seen.add(char)
-            for g in groups:
-                if (g not in checked) and groups[g].issubset(seen):
-                    checked.add(g)
-                    checkpoints[i].append(g)
-
-        return helper(0, 0, tuple(range(10)))
-solution().countSolvable(["SEND","MORE"], "MONEY") # == 1
-# solution().countSolvable(["GREEN","BLUE"], "BLACK") # == 12
+            c = allWords[wordIdx][-charIdx-1]
+            if c in char2digit:
+                # if current word's current char already map to a digit, continue with next word
+                return dfs(charIdx, wordIdx + 1, carry, visited, char2digit)
+            else:
+                # otherwise try all possibilities via dfs
+                firstDigit = 1 if c in firstChars else 0
+                for digit in range(firstDigit, 10):
+                    if digit not in visited:
+                        visited.add(digit)
+                        char2digit[c] = digit
+                        if dfs(charIdx, wordIdx + 1, carry, visited, char2digit.copy()): 
+                            # return True
+                            self.count += 1
+                            return
+                        visited.remove(digit) # restore visited and char2digit by discarding the copy
+                return False
+        aa =  {}
+        dfs(0, 0, 0, set(), aa)
+        print(aa)
+        return self.count
+# Solution().countSolvable(["SEND","MORE"], "MONEY") # == 1
+Solution().countSolvable(["GREEN","BLUE"], "BLACK") # == 12

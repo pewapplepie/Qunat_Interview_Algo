@@ -1,6 +1,22 @@
 import collections
 import numpy as np
 from typing import DefaultDict, Callable
+import abc
+
+class Player(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def starts(self, x, y):
+        pass
+
+class Peter(Player):
+    def starts(self, x, y):
+        return x*y
+
+class Sally(Player):
+    def starts(self, x, y):
+        return x+y
+
+
 
 class NumberGame:
     def __init__(self, maxround: int=1000) -> None:

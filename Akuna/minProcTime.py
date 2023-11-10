@@ -13,7 +13,11 @@ def minCostTime(n, proce, task):
     return max_cost
 processor = [8, 10]
 tasks = [2,2,3,1,8,7,4,5]
-minCostTime(2, processor, tasks)
+print(minCostTime(2, processor, tasks))
+
+processor = [10, 20]
+tasks = [2,3,1,2,5,8,4,3]
+print(minCostTime(2, processor, tasks))
 
 
 
